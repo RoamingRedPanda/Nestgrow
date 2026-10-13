@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NestGrow — Watch Your Nest Egg Grow</title>
+<meta name="description" content="NestGrow: a free, simple retirement calculator for your 401(k), Roth IRA, HSA, and brokerage account." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --green: #1EC677;
+    --green-dark: #0B6E4F;
+    --green-deep: #064E3B;
+    --green-light: #E9FAF1;
+    --green-mid: #BFF0D6;
+    --ink: #13221B;
+    --muted: #5B6B63;
+    --line: #E3ECE7;
+    --bg: #F6FBF8;
+    --card: #FFFFFF;
+    --c401k: #1EC677;
+    --croth: #0B6E4F;
+    --chsa: #2EC4B6;
+    --cbrok: #1F3A5F;
+    --radius: 18px;
+    --shadow: 0 6px 24px rgba(11, 110, 79, 0.08);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.5;
+  }
+
+  /* ---------- Header ---------- */
+  header {
+    background: linear-gradient(135deg, var(--green) 0%, #13A862 60%, var(--green-dark) 100%);
+    color: #fff;
+    padding: 28px 24px 84px;
+  }
+  .nav { max-width: 1280px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 26px; letter-spacing: -0.5px; }
+  .logo-mark {
+    width: 40px; height: 40px; border-radius: 12px; background: #fff;
+    display: grid; place-items: center; box-shadow: 0 4px 12px rgba(0,0,0,.12);
+  }
+  .nav-actions { display: flex; gap: 10px; }
+  .btn {
+    border: none; cursor: pointer; font: inherit; font-weight: 600; font-size: 14px;
+    padding: 10px 18px; border-radius: 999px; transition: transform .1s ease, background .2s ease;
+  }
+  .btn:active { transform: scale(.97); }
+  .btn-white { background: #fff; color: var(--green-dark); }
+  .btn-white:hover { background: var(--green-light); }
+  .btn-ghost { background: rgba(255,255,255,.16); color: #fff; }
+  .btn-ghost:hover { background: rgba(255,255,255,.26); }
+  .hero { max-width: 1280px; margin: 28px auto 0; }
+  .hero h1 { margin: 0 0 6px; font-size: clamp(26px, 4vw, 40px); letter-spacing: -1px; font-weight: 800; }
+  .hero p { margin: 0; opacity: .92; font-size: 17px; max-width: 640px; }
+
+  /* ---------- Layout ---------- */
+  main {
+    max-width: 1280px; margin: -56px auto 40px; padding: 0 24px;
+    display: grid; grid-template-columns: 400px 1fr; gap: 24px; align-items: start;
+  }
+  @media (max-width: 1000px) { main { grid-template-columns: 1fr; } }
+
+  .panel {
+    background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 22px; border: 1px solid var(--line);
+  }
+  aside.panel { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow-y: auto; }
+  @media (max-width: 1000px) { aside.panel { position: static; max-height: none; } }
+
+  .section { border-bottom: 1px solid var(--line); padding: 16px 0; }
+  .section:first-child { padding-top: 0; }
+  .section:last-child { border-bottom: none; padding-bottom: 0; }
+  .section-title {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    font-weight: 700; font-size: 15px; margin-bottom: 12px;
+  }
+  .section-title .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+  .field:last-child { margin-bottom: 0; }
+  label, .label { font-size: 13px; font-weight: 600; color: var(--muted); }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .input-wrap { position: relative; }
+  .input-wrap .prefix, .input-wrap .suffix {
+    position: absolute; top: 50%; transform: translateY(-50%); color: var(--muted); font-weight: 600; font-size: 14px; pointer-events: none;
+  }
+  .input-wrap .prefix { left: 12px; }
+  .input-wrap .suffix { right: 12px; }
+  input[type="number"], select {
+    width: 100%; padding: 11px 12px; font: inherit; font-size: 15px; font-weight: 600; color: var(--ink);
+    border: 1.5px solid var(--line); border-radius: 12px; background: #FBFDFC; outline: none;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  .input-wrap.has-prefix input { padding-left: 26px; }
+  .input-wrap.has-suffix input { padding-right: 30px; }
+  input[type="number"]:focus, select:focus { border-color: var(--green); box-shadow: 0 0 0 4px rgba(30,198,119,.15); }
+  input[type="number"]:disabled, select:disabled { opacity: .5; }
+
+  input[type="range"] { width: 100%; accent-color: var(--green); height: 6px; }
+  .rate-box { display: flex; align-items: center; gap: 12px; }
+  .rate-box .input-wrap { width: 110px; flex-shrink: 0; }
+
+  /* Segmented control */
+  .seg { display: flex; background: var(--green-light); border-radius: 12px; padding: 4px; gap: 4px; }
+  .seg button {
+    flex: 1; border: none; background: transparent; padding: 8px 6px; border-radius: 9px; font: inherit;
+    font-size: 13px; font-weight: 600; color: var(--green-dark); cursor: pointer;
+  }
+  .seg button.active { background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,.08); color: var(--ink); }
+
+  /* Toggle switch */
+  .switch { position: relative; display: inline-block; width: 44px; height: 26px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; inset: 0; background: #CBD5D0; border-radius: 999px; cursor: pointer; transition: .2s; }
+  .slider::before { content: ""; position: absolute; width: 20px; height: 20px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+  .switch input:checked + .slider { background: var(--green); }
+  .switch input:checked + .slider::before { transform: translateX(18px); }
+  .toggle-line { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 14px; font-weight: 600; margin-bottom: 10px; }
+  .toggle-line span.small { font-weight: 500; color: var(--muted); font-size: 12px; display: block; }
+
+  .collapsible.hidden { display: none; }
+  .limit-pill {
+    display: inline-block; font-size: 12px; font-weight: 600; background: var(--green-light);
+    color: var(--green-dark); padding: 3px 10px; border-radius: 999px;
+  }
+
+  /* ---------- Results ---------- */
+  .results { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+  .total-card {
+    background: linear-gradient(135deg, var(--green-deep), var(--green-dark));
+    color: #fff; border-radius: var(--radius); padding: 26px; box-shadow: var(--shadow);
+    display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; align-items: center;
+  }
+  @media (max-width: 700px) { .total-card { grid-template-columns: 1fr; } }
+  .total-card .eyebrow { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; opacity: .8; }
+  .total-card .big { font-size: clamp(36px, 6vw, 56px); font-weight: 800; letter-spacing: -1.5px; line-height: 1.1; margin: 6px 0; }
+  .total-card .sub { font-size: 14px; opacity: .85; }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .stat { background: rgba(255,255,255,.1); border-radius: 14px; padding: 12px 14px; }
+  .stat .k { font-size: 12px; opacity: .8; font-weight: 500; }
+  .stat .v { font-size: 19px; font-weight: 700; }
+  .view-toggle { margin-top: 14px; display: inline-flex; background: rgba(255,255,255,.12); padding: 4px; border-radius: 12px; gap: 4px; }
+  .view-toggle button { border: none; background: transparent; color: #fff; font: inherit; font-size: 13px; font-weight: 600; padding: 7px 12px; border-radius: 9px; cursor: pointer; }
+  .view-toggle button.active { background: #fff; color: var(--green-deep); }
+
+  .acct-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+  .acct {
+    background: var(--card); border-radius: var(--radius); padding: 18px; border: 1px solid var(--line);
+    box-shadow: var(--shadow); border-top: 5px solid var(--accent); display: flex; flex-direction: column; gap: 6px;
+  }
+  .acct.hidden { display: none; }
+  .acct .name { display: flex; align-items: center; justify-content: space-between; font-weight: 700; font-size: 14px; }
+  .acct .share { font-size: 12px; font-weight: 700; color: var(--accent); background: var(--green-light); padding: 2px 8px; border-radius: 999px; }
+  .acct .bal { font-size: 26px; font-weight: 800; letter-spacing: -.5px; }
+  .acct .meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+  .acct .meta b { color: var(--ink); font-weight: 700; }
+  .acct .spark { height: 60px; margin-top: 6px; }
+  .bar-track { height: 8px; background: var(--green-light); border-radius: 999px; overflow: hidden; display: flex; }
+  .bar-track .contrib { background: var(--accent); opacity: .45; }
+  .bar-track .growth { background: var(--accent); }
+
+  .chart-card h2 { margin: 0 0 4px; font-size: 18px; letter-spacing: -.3px; }
+  .chart-card p.desc { margin: 0 0 16px; color: var(--muted); font-size: 14px; }
+  .chart-wrap { position: relative; height: 360px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 800px) { .two-col { grid-template-columns: 1fr; } }
+  .chart-wrap.short { height: 300px; }
+
+  .milestones { display: flex; flex-wrap: wrap; gap: 10px; }
+  .milestone { background: var(--green-light); border: 1px solid var(--green-mid); border-radius: 14px; padding: 10px 14px; font-size: 14px; }
+  .milestone b { color: var(--green-dark); }
+
+  details summary { cursor: pointer; font-weight: 700; font-size: 16px; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::after { content: "＋"; color: var(--green); font-size: 20px; }
+  details[open] summary::after { content: "－"; }
+  .table-wrap { overflow-x: auto; margin-top: 14px; max-height: 460px; overflow-y: auto; border-radius: 12px; border: 1px solid var(--line); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+  th, td { padding: 10px 12px; text-align: right; white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; }
+  thead th { position: sticky; top: 0; background: var(--green-light); color: var(--green-deep); font-weight: 700; font-size: 13px; }
+  tbody tr:nth-child(even) { background: #FAFDFB; }
+  tbody tr.ret-row { background: var(--green-mid); font-weight: 700; }
+  td.total { font-weight: 700; }
+
+  .notes { font-size: 12.5px; color: var(--muted); }
+  .notes ul { margin: 8px 0 0; padding-left: 18px; }
+
+  footer { text-align: center; color: var(--muted); font-size: 13px; padding: 10px 24px 40px; }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(120px);
+    background: var(--ink); color: #fff; padding: 12px 20px; border-radius: 999px; font-weight: 600; font-size: 14px;
+    transition: transform .3s ease; z-index: 50; box-shadow: 0 8px 24px rgba(0,0,0,.2);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .warn { color: #B45309; font-size: 12px; font-weight: 600; display: none; }
+  .warn.show { display: block; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="nav">
+    <div class="logo">
+      <div class="logo-mark">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 21c-4.4 0-8-2.7-8-6.5 0-4.6 4-11.5 8-11.5s8 6.9 8 11.5C20 18.3 16.4 21 12 21z" fill="#1EC677"/>
+          <path d="M12 17V10M12 12.5l-2.5-2.5M12 11l2.5-2.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </div>
+      NestGrow
+    </div>
+    <div class="nav-actions">
+      <button class="btn btn-ghost" id="resetBtn" type="button">Reset</button>
+      <button class="btn btn-white" id="shareBtn" type="button">🔗 Share my plan</button>
+    </div>
+  </div>
+  <div class="hero">
+    <h1>Watch your nest egg grow.</h1>
+    <p>Add your 401(k), Roth IRA, HSA, and brokerage balances to see what they could be worth by the time you retire.</p>
+  </div>
+</header>
+
+<main>
+  <!-- ================= INPUTS ================= -->
+  <aside class="panel" aria-label="Calculator inputs">
+
+    <div class="section">
+      <div class="section-title">👤 About you</div>
+      <div class="row">
+        <div class="field">
+          <label for="curAge">Current age</label>
+          <input type="number" id="curAge" value="25" min="16" max="90" />
+        </div>
+        <div class="field">
+          <label for="retAge">Retirement age</label>
+          <input type="number" id="retAge" value="65" min="17" max="100" />
+        </div>
+      </div>
+      <div class="field">
+        <label for="rate">Expected annual return</label>
+        <div class="rate-box">
+          <input type="range" id="rateRange" min="0" max="15" step="0.25" value="7" aria-label="Annual return slider" />
+          <div class="input-wrap has-suffix">
+            <input type="number" id="rate" value="7" min="0" max="30" step="0.25" />
+            <span class="suffix">%</span>
+          </div>
+        </div>
+        <div class="hint">7% is a common long-term planning assumption. Drag or type to adjust.</div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="inflation">Inflation</label>
+          <div class="input-wrap has-suffix">
+            <input type="number" id="inflation" value="2.5" min="0" max="15" step="0.1" />
+            <span class="suffix">%</span>
+          </div>
+        </div>
+        <div class="field">
+          <label for="limitGrowth">Limits rise yearly</label>
+          <select id="limitGrowth">
+            <option value="no">No (2026 limits)</option>
+            <option value="yes">Yes, with inflation</option>
+          </select>
+        </div>
+      </div>
+      <div class="toggle-line">
+        <div>Include catch-up contributions<span class="small">Adds the extra amounts allowed at 50+ (55+ for HSA)</span></div>
+        <label class="switch"><input type="checkbox" id="catchUp" checked /><span class="slider"></span></label>
+      </div>
+    </div>
+
+    <!-- 401k -->
+    <div class="section">
+      <div class="section-title"><span><span class="dot" style="background:var(--c401k)"></span>401(k)</span><span class="limit-pill" id="k401Pill">Max: $24,500</span></div>
+      <div class="field">
+        <label for="k401Bal">Current balance</label>
+        <div class="input-wrap has-prefix"><span class="prefix">$</span><input type="number" id="k401Bal" value="57000" min="0" step="500" /></div>
+      </div>
+      <div class="field">
+        <span class="label">Yearly contribution</span>
+        <div class="seg" data-target="k401Mode">
+          <button type="button" data-val="max" class="active">Max out</button>
+          <button type="button" data-val="custom">Custom</button>
+          <button type="button" data-val="none">None</button>
+        </div>
+        <input type="hidden" id="k401Mode" value="max" />
+      </div>
+      <div class="row">
+        <div class="field collapsible" data-show-when="k401Mode:custom">
+          <label for="k401Custom">Your amount / yr</label>
+          <div class="input-wrap has-prefix"><span class="prefix">$</span><input type="number" id="k401Custom" value="10000" min="0" step="500" /></div>
+        </div>
+        <div class="field collapsible" data-show-when="k401Mode:max,custom">
+          <label for="k401Until">Contribute until age</label>
+          <input type="number" id="k401Until" value="65" min="16" max="100" />
+        </div>
+      </div>
+      <div class="field">
+        <span class="label">Employer match (optional)</span>
+        <div class="seg" data-target="matchType">
+          <button type="button" data-val="pct" class="active">% match</button>
+          <button type="button" data-val="dollar">$ per year</button>
+          <button type="button" data-val="none">No match</button>
+        </div>
+        <input type="hidden" id="matchType" value="pct" />
+      </div>
+      <div class="collapsible" data-show-when="matchType:pct">
+        <div class="row">
+          <div class="field">
+            <label for="salary">Annual salary</label>
+            <div class="input-wrap has-prefix"><span class="prefix">$</span><input type="number" id="salary" value="75000" min="0" step="1000" /></div>
+          </div>
+          <div class="field">
+            <label for="salaryGrowth">Raise / yr</label>
+            <div class="input-wrap has-suffix"><input type="number" id="salaryGrowth" value="3" min="0" max="20" step="0.5" /><span class="suffix">%</span></div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="matchPct">Employer matches</label>
+            <div class="input-wrap has-suffix"><input type="number" id="matchPct" value="100" min="0" max="200" step="5" /><span class="suffix">%</span></div>
+          </div>
+          <div class="field">
+            <label for="matchCap">Up to (of salary)</label>
+            <div class="input-wrap has-suffix"><input type="number" id="matchCap" value="6" min="0" max="100" step="0.5" /><span class="suffix">%</span></div>
+          </div>
+        </div>
+        <div class="hint" id="matchHint">Example: 100% match up to 6% of salary.</div>
+      </div>
+      <div class="field collapsible" data-show-when="matchType:dollar">
+        <label for="k401Match">Employer match / yr</label>
+        <div class="input-wrap has-prefix"><span class="prefix">$</span><input type="number" id="k401Match" value="0" min="0" step="250" /></div>
+      </div>
+      <div class="hint">The match is added only in years you contribute. The combined total is capped at the $72,000 IRS annual limit.</div>
+      <div class="warn" id="k401Warn">Custom amount is above the IRS limit — it's capped at the limit.</div>
+    </div>
+
+    <!-- Roth -->
+    <div class="section">
+      <div class="section-title"><span><span class="dot" style="background:var(--croth)"></span>Roth IRA</span><span class="limit-pill" id="rothPill">Max: $7,500</span></div>
+      <div class="field">
+        <label for="rothBal">Current balance</label>
+        <div class="input-wrap has-prefix"><span class="prefix">$</span><input type="number" id="rothBal" value="25000" min="0" step="500" /></div>
+      </div>
+      <div class="field">
+        <span class="label">Yearly contribution</span>
+        <div class="seg" data-target="rothMode">
+          <button type="button" data-val="max" class="active">Max out</button>
+          <button type="button" data-val="custom">Custom</button>
+          <button type="button" data-val="none">None</button>
+        </div>
+        <input type="hidden" id="rothMode" value="max" />
+      </div>
+      <div class="row">
+        <div class="field collapsible" data-show-when="rothMode:custom">
+          <label for="rothCustom">Your amount / yr</label>
+          <div class="input-wrap has-prefix"><span class="prefix">$</span><input type="number" id="rothCustom" value="3000" min="0" step="250" /></div>
+        </div>
+        <div class="field collapsible" data-show-when="rothMode:max,custom">
+          <label for="rothUntil">Contribute until age</label>
+          <input type="number" id="rothUntil" value="65" min="16" max="100" />
+        </div>
+      </div>
+      <div class="warn" id="rothWarn">Custom amount is above the IRS limit — it's capped at the limit.</div>
+    </div>
+
+    <!-- HSA -->
+    <div class="section">
+      <div class="section-title"><span><span class="dot" style="background:var(--chsa)"></span>HSA</span><span class="limit-pill" id="hsaPill">Max: $4,400</span></div>
+      <div class="row">
+        <div class="field">
+          <label for="hsaBal">Current balance</label>
+          <div class="input-wrap has-prefix"><span class="prefix">$</span><input type="number" id="hsaBal" value="7000" min="0" step="250" /></div>
+        </div>
+        <div class="field">
+          <label for="hsaCoverage">Coverage</label>
+          <select id="hsaCoverage">
+            <option value="self">Self-only</option>
+            <option value="family">Family</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <span class="label">Yearly contribution</span>
+        <div class="seg" data-target="hsaMode">
+          <button type="button" data-val="max" class="active">Max out</button>
+          <button type="button" data-val="custom">Custom</button>
+          <button type="button" data-val="none">None</button>
+        </div>
+        <input type="hidden" id="hsaMode" value="max" />
+      </div>
+      <div class="row">
+        <div class="field collapsible" data-show-when="hsaMode:custom">
+          <label for="hsaCustom">Your amount / yr</label>
+          <div class="input-wrap has-prefix"><span class="prefix">$</span><input type="number" id="hsaCustom" value="2000" min="0" step="250" /></div>
+        </div>
+        <div class="field collapsible" data-show-when="hsaMode:max,custom">
+          <label for="hsaUntil">Contribute until age</label>
+          <input type="number" id="hsaUntil" value="65" min="16" max="65" />
+        </div>
+      </div>
+      <div class="hint">HSA contributions stop at 65 (Medicare enrollment generally ends eligibility).</div>
+      <div class="warn" id="hsaWarn">Custom amount is above the IRS limit — it's capped at the limit.</div>
+    </div>
+
+    <!-- Brokerage -->
+    <div class="section">
+      <div class="section-title"><span><span class="dot" style="background:var(--cbrok)"></span>Taxable brokerage</span></div>
+      <div class="toggle-line">
+        <div>I have / plan to have a brokerage account</div>
+        <label class="switch"><input type="checkbox" id="brokOn" checked /><span class="slider"></span></label>
+      </div>
+      <div class="collapsible" id="brokFields">
+        <div class="row">
+          <div class="field">
+            <label for="brokBal">Current balance</label>
+            <div class="input-wrap has-prefix"><span class="prefix">$</span><input type="number" id="brokBal" value="5000" min="0" step="500" /></div>
+          </div>
+          <div class="field">
+            <label for="brokMonthly">Monthly contribution</label>
+            <div class="input-wrap has-prefix"><span class="prefix">$</span><input type="number" id="brokMonthly" value="500" min="0" step="50" /></div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="brokUntil">Contribute until age</label>
+            <input type="number" id="brokUntil" value="65" min="16" max="100" />
+          </div>
+          <div class="field">
+            <label for="brokIncrease">Raise contribution / yr</label>
+            <div class="input-wrap has-suffix"><input type="number" id="brokIncrease" value="0" min="0" max="20" step="0.5" /><span class="suffix">%</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ================= RESULTS ================= -->
+  <section class="results" aria-live="polite">
+    <div class="total-card">
+      <div>
+        <div class="eyebrow" id="totalLabel">Your nest egg at 65</div>
+        <div class="big" id="totalBig">$0</div>
+        <div class="sub" id="totalSub"></div>
+        <div class="view-toggle" role="group" aria-label="Value display">
+          <button type="button" data-view="nominal" class="active">Future dollars</button>
+          <button type="button" data-view="real">Today's dollars</button>
+        </div>
+      </div>
+      <div class="stat-grid">
+        <div class="stat"><div class="k">Years to grow</div><div class="v" id="statYears">0</div></div>
+        <div class="stat"><div class="k">Starting balance</div><div class="v" id="statStart">$0</div></div>
+        <div class="stat"><div class="k">You'll contribute</div><div class="v" id="statContrib">$0</div></div>
+        <div class="stat"><div class="k">Investment growth</div><div class="v" id="statGrowth">$0</div></div>
+      </div>
+    </div>
+
+    <div class="acct-grid">
+      <div class="acct" id="card-k401" style="--accent:var(--c401k)">
+        <div class="name">401(k) <span class="share" id="share-k401">0%</span></div>
+        <div class="bal" id="bal-k401">$0</div>
+        <div class="bar-track"><div class="contrib" id="barc-k401"></div><div class="growth" id="barg-k401"></div></div>
+        <div class="meta"><span>Contributed <b id="con-k401">$0</b></span><span>Growth <b id="gro-k401">$0</b></span></div>
+        <div class="spark"><canvas id="spark-k401"></canvas></div>
+      </div>
+      <div class="acct" id="card-roth" style="--accent:var(--croth)">
+        <div class="name">Roth IRA <span class="share" id="share-roth">0%</span></div>
+        <div class="bal" id="bal-roth">$0</div>
+        <div class="bar-track"><div class="contrib" id="barc-roth"></div><div class="growth" id="barg-roth"></div></div>
+        <div class="meta"><span>Contributed <b id="con-roth">$0</b></span><span>Growth <b id="gro-roth">$0</b></span></div>
+        <div class="spark"><canvas id="spark-roth"></canvas></div>
+      </div>
+      <div class="acct" id="card-hsa" style="--accent:var(--chsa)">
+        <div class="name">HSA <span class="share" id="share-hsa">0%</span></div>
+        <div class="bal" id="bal-hsa">$0</div>
+        <div class="bar-track"><div class="contrib" id="barc-hsa"></div><div class="growth" id="barg-hsa"></div></div>
+        <div class="meta"><span>Contributed <b id="con-hsa">$0</b></span><span>Growth <b id="gro-hsa">$0</b></span></div>
+        <div class="spark"><canvas id="spark-hsa"></canvas></div>
+      </div>
+      <div class="acct" id="card-brok" style="--accent:var(--cbrok)">
+        <div class="name">Brokerage <span class="share" id="share-brok">0%</span></div>
+        <div class="bal" id="bal-brok">$0</div>
+        <div class="bar-track"><div class="contrib" id="barc-brok"></div><div class="growth" id="barg-brok"></div></div>
+        <div class="meta"><span>Contributed <b id="con-brok">$0</b></span><span>Growth <b id="gro-brok">$0</b></span></div>
+        <div class="spark"><canvas id="spark-brok"></canvas></div>
+      </div>
+    </div>
+
+    <div class="panel chart-card">
+      <h2>📈 Total growth over time</h2>
+      <p class="desc">All accounts stacked together, year by year until retirement.</p>
+      <div class="chart-wrap"><canvas id="growthChart"></canvas></div>
+    </div>
+
+    <div class="two-col">
+      <div class="panel chart-card">
+        <h2>🥧 Your mix at retirement</h2>
+        <p class="desc">How much of the total each account makes up.</p>
+        <div class="chart-wrap short"><canvas id="mixChart"></canvas></div>
+      </div>
+      <div class="panel chart-card">
+        <h2>💪 Contributions vs. growth</h2>
+        <p class="desc">What you put in compared with what the market added.</p>
+        <div class="chart-wrap short"><canvas id="splitChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="panel chart-card">
+      <h2>🏁 Milestones</h2>
+      <p class="desc">The age your combined balance is projected to first reach each mark.</p>
+      <div class="milestones" id="milestones"></div>
+    </div>
+
+    <div class="panel">
+      <details>
+        <summary>📋 Year-by-year breakdown</summary>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Age</th><th>Year</th><th>401(k)</th><th>Roth IRA</th><th>HSA</th><th class="brok-col">Brokerage</th><th>Total</th></tr></thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </details>
+    </div>
+
+    <div class="panel notes">
+      <strong>How NestGrow calculates</strong>
+      <ul>
+        <li>Contributions go in monthly, and returns compound monthly at the annual rate you choose.</li>
+        <li>"Max out" uses the 2026 IRS limits: 401(k) $24,500 (+$8,000 at 50+, or +$11,250 at ages 60–63), IRA $7,500 (+$1,100 at 50+), HSA $4,400 self-only / $8,750 family (+$1,000 at 55+).</li>
+        <li>Percentage match = the lesser of (your 401(k) contribution, salary × "up to" %) × match %. Your salary grows by the raise % each year.</li>
+        <li>"Contribute until age" means you contribute every year until you reach that age.</li>
+        <li>"Today's dollars" adjusts future values for the inflation rate you enter.</li>
+        <li>Results are pre-tax estimates for educational use only, not financial advice. Real returns vary year to year.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<footer>NestGrow · Made to share · Estimates only, not financial advice</footer>
+<div class="toast" id="toast">Link copied!</div>
+
+<script>
+(() => {
+  // ---------- Constants (2026 IRS limits) ----------
+  const LIMITS = {
+    k401: 24500, k401Catch: 8000, k401Super: 11250,
+    ira: 7500, iraCatch: 1100,
+    annualAdd: 72000,
+    hsaSelf: 4400, hsaFamily: 8750, hsaCatch: 1000
+  };
+  const BASE_YEAR = new Date().getFullYear();
+  const ACCTS = [
+    { key: "k401", name: "401(k)",    color: "#1EC677" },
+    { key: "roth", name: "Roth IRA",  color: "#0B6E4F" },
+    { key: "hsa",  name: "HSA",       color: "#2EC4B6" },
+    { key: "brok", name: "Brokerage", color: "#1F3A5F" }
+  ];
+  const INPUT_IDS = ["curAge","retAge","rate","inflation","limitGrowth","catchUp",
+    "k401Bal","k401Mode","k401Custom","k401Until","k401Match","matchType","salary","salaryGrowth","matchPct","matchCap",
+    "rothBal","rothMode","rothCustom","rothUntil",
+    "hsaBal","hsaCoverage","hsaMode","hsaCustom","hsaUntil",
+    "brokOn","brokBal","brokMonthly","brokUntil","brokIncrease"];
+
+  const $ = (id) => document.getElementById(id);
+  const num = (id) => { const v = parseFloat($(id).value); return isNaN(v) ? 0 : v; };
+  let view = "nominal";
+  const DEFAULTS = {};
+  INPUT_IDS.forEach(id => { const el = $(id); DEFAULTS[id] = el.type === "checkbox" ? el.checked : el.value; });
+
+  // ---------- Formatting ----------
+  const fmt = (v) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(v);
+  const fmtShort = (v) => {
+    const a = Math.abs(v);
+    if (a >= 1e9) return "$" + (v / 1e9).toFixed(2).replace(/\.?0+$/, "") + "B";
+    if (a >= 1e6) return "$" + (v / 1e6).toFixed(2).replace(/\.?0+$/, "") + "M";
+    if (a >= 1e3) return "$" + (v / 1e3).toFixed(0) + "K";
+    return "$" + Math.round(v);
+  };
+
+  // ---------- Inputs ----------
+  function readInputs() {
+    const curAge = Math.round(num("curAge"));
+    let retAge = Math.round(num("retAge"));
+    if (retAge <= curAge) retAge = curAge + 1;
+    return {
+      curAge, retAge,
+      rate: num("rate") / 100,
+      infl: num("inflation") / 100,
+      limitGrowth: $("limitGrowth").value === "yes",
+      catchUp: $("catchUp").checked,
+      k401: { bal: num("k401Bal"), mode: $("k401Mode").value, custom: num("k401Custom"), until: num("k401Until"), match: num("k401Match"),
+        matchType: $("matchType").value, salary: num("salary"), salaryGrowth: num("salaryGrowth") / 100,
+        matchPct: num("matchPct") / 100, matchCap: num("matchCap") / 100 },
+      roth: { bal: num("rothBal"), mode: $("rothMode").value, custom: num("rothCustom"), until: num("rothUntil") },
+      hsa:  { bal: num("hsaBal"), mode: $("hsaMode").value, custom: num("hsaCustom"), until: Math.min(num("hsaUntil"), 65), family: $("hsaCoverage").value === "family" },
+      brok: { on: $("brokOn").checked, bal: num("brokBal"), monthly: num("brokMonthly"), until: num("brokUntil"), inc: num("brokIncrease") / 100 }
+    };
+  }
+
+  // Annual IRS limit for an account in a given year index & age
+  function limitFor(key, age, yearIdx, p) {
+    const g = p.limitGrowth ? Math.pow(1 + p.infl, yearIdx) : 1;
+    if (key === "k401") {
+      let L = LIMITS.k401 * g;
+      if (p.catchUp && age >= 50) L += ((age >= 60 && age <= 63) ? LIMITS.k401Super : LIMITS.k401Catch) * g;
+      return L;
+    }
+    if (key === "roth") {
+      let L = LIMITS.ira * g;
+      if (p.catchUp && age >= 50) L += LIMITS.iraCatch * g;
+      return L;
+    }
+    if (key === "hsa") {
+      let L = (p.hsa.family ? LIMITS.hsaFamily : LIMITS.hsaSelf) * g;
+      if (p.catchUp && age >= 55) L += LIMITS.hsaCatch; // fixed by law, not indexed
+      return L;
+    }
+    return 0;
+  }
+
+  // Employer 401(k) match for a given employee contribution
+  function employerMatch(empC, yearIdx, p) {
+    const a = p.k401;
+    let m = 0;
+    if (a.matchType === "dollar") m = a.match;
+    else if (a.matchType === "pct") {
+      const sal = a.salary * Math.pow(1 + a.salaryGrowth, yearIdx);
+      m = Math.min(empC, sal * a.matchCap) * a.matchPct;
+    }
+    const cap = LIMITS.annualAdd * (p.limitGrowth ? Math.pow(1 + p.infl, yearIdx) : 1);
+    return Math.max(0, Math.min(m, cap - empC));
+  }
+
+  // Yearly contribution for each account
+  function contribution(key, age, yearIdx, p) {
+    if (key === "brok") {
+      if (!p.brok.on || age >= p.brok.until) return 0;
+      return p.brok.monthly * 12 * Math.pow(1 + p.brok.inc, yearIdx);
+    }
+    const a = p[key];
+    if (a.mode === "none" || age >= a.until) return 0;
+    if (key === "hsa" && age >= 65) return 0;
+    const L = limitFor(key, age, yearIdx, p);
+    let c = a.mode === "max" ? L : Math.min(a.custom, L);
+    if (key === "k401") c += employerMatch(c, yearIdx, p);
+    return c;
+  }
+
+  // ---------- Simulation (monthly compounding) ----------
+  function simulate(p) {
+    const years = p.retAge - p.curAge;
+    const mRate = Math.pow(1 + p.rate, 1 / 12) - 1;
+    const res = { ages: [p.curAge], years: [BASE_YEAR], bal: {}, contrib: {}, start: {} };
+    ACCTS.forEach(a => {
+      const startBal = a.key === "brok" && !p.brok.on ? 0 : p[a.key].bal;
+      res.bal[a.key] = [startBal];
+      res.contrib[a.key] = 0;
+      res.start[a.key] = startBal;
+    });
+    for (let i = 0; i < years; i++) {
+      const age = p.curAge + i;
+      ACCTS.forEach(a => {
+        let b = res.bal[a.key][i];
+        const c = contribution(a.key, age, i, p);
+        const mc = c / 12;
+        for (let m = 0; m < 12; m++) b = b * (1 + mRate) + mc;
+        res.bal[a.key].push(b);
+        res.contrib[a.key] += c;
+      });
+      res.ages.push(age + 1);
+      res.years.push(BASE_YEAR + i + 1);
+    }
+    res.total = res.ages.map((_, i) => ACCTS.reduce((s, a) => s + res.bal[a.key][i], 0));
+    return res;
+  }
+
+  // ---------- Charts ----------
+  const charts = {};
+
+  function makeCharts() {
+    charts.growth = new Chart($("growthChart"), {
+      type: "line",
+      data: { labels: [], datasets: ACCTS.map(a => ({
+        label: a.name, data: [], borderColor: a.color, backgroundColor: a.color + "CC",
+        fill: true, tension: 0.3, pointRadius: 0, pointHoverRadius: 5, borderWidth: 2
+      })) },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        scales: {
+          x: { stacked: true, grid: { display: false }, title: { display: true, text: "Age" } },
+          y: { stacked: true, ticks: { callback: v => fmtShort(v) }, grid: { color: "#EEF3F0" } }
+        },
+        plugins: {
+          legend: { position: "bottom", labels: { usePointStyle: true, boxWidth: 8, padding: 18 } },
+          tooltip: { callbacks: {
+            title: items => `Age ${items[0].label}`,
+            label: c => ` ${c.dataset.label}: ${fmt(c.parsed.y)}`,
+            footer: items => `Total: ${fmt(items.reduce((s, i) => s + i.parsed.y, 0))}`
+          } }
+        }
+      }
+    });
+
+    charts.mix = new Chart($("mixChart"), {
+      type: "doughnut",
+      data: { labels: [], datasets: [{ data: [], backgroundColor: [], borderWidth: 3, borderColor: "#fff" }] },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: "62%",
+        plugins: {
+          legend: { position: "bottom", labels: { usePointStyle: true, boxWidth: 8, padding: 14 } },
+          tooltip: { callbacks: { label: c => {
+            const t = c.dataset.data.reduce((s, v) => s + v, 0);
+            return ` ${c.label}: ${fmt(c.parsed)} (${t ? (c.parsed / t * 100).toFixed(1) : 0}%)`;
+          } } }
+        }
+      }
+    });
+
+    charts.split = new Chart($("splitChart"), {
+      type: "bar",
+      data: { labels: [], datasets: [
+        { label: "Starting balance", data: [], backgroundColor: "#BFF0D6", borderRadius: 6 },
+        { label: "Contributions", data: [], backgroundColor: "#1EC677", borderRadius: 6 },
+        { label: "Growth", data: [], backgroundColor: "#0B6E4F", borderRadius: 6 }
+      ] },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: {
+          x: { stacked: true, grid: { display: false } },
+          y: { stacked: true, ticks: { callback: v => fmtShort(v) }, grid: { color: "#EEF3F0" } }
+        },
+        plugins: {
+          legend: { position: "bottom", labels: { usePointStyle: true, boxWidth: 8, padding: 14 } },
+          tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${fmt(c.parsed.y)}` } }
+        }
+      }
+    });
+
+    ACCTS.forEach(a => {
+      charts["spark-" + a.key] = new Chart($("spark-" + a.key), {
+        type: "line",
+        data: { labels: [], datasets: [{ data: [], borderColor: a.color, backgroundColor: a.color + "26", fill: true, tension: 0.35, pointRadius: 0, borderWidth: 2 }] },
+        options: {
+          responsive: true, maintainAspectRatio: false, animation: false,
+          scales: { x: { display: false }, y: { display: false, beginAtZero: true } },
+          plugins: { legend: { display: false }, tooltip: {
+            displayColors: false,
+            callbacks: { title: i => `Age ${i[0].label}`, label: c => fmt(c.parsed.y) }
+          } }
+        }
+      });
+    });
+  }
+
+  // ---------- Render ----------
+  function render() {
+    const p = readInputs();
+    const r = simulate(p);
+    const n = r.ages.length - 1;
+    const deflate = (v, i) => view === "real" ? v / Math.pow(1 + p.infl, i) : v;
+    const active = ACCTS.filter(a => a.key !== "brok" || p.brok.on);
+
+    // Limit pills (current year, current age)
+    $("k401Pill").textContent = "Max: " + fmt(limitFor("k401", p.curAge, 0, p));
+    $("rothPill").textContent = "Max: " + fmt(limitFor("roth", p.curAge, 0, p));
+    $("hsaPill").textContent  = "Max: " + fmt(limitFor("hsa", p.curAge, 0, p));
+    $("k401Warn").classList.toggle("show", p.k401.mode === "custom" && p.k401.custom > limitFor("k401", p.curAge, 0, p));
+    $("rothWarn").classList.toggle("show", p.roth.mode === "custom" && p.roth.custom > limitFor("roth", p.curAge, 0, p));
+    $("hsaWarn").classList.toggle("show",  p.hsa.mode === "custom"  && p.hsa.custom  > limitFor("hsa", p.curAge, 0, p));
+
+    if (p.k401.matchType === "pct") {
+      const empC0 = p.k401.mode === "none" ? 0 : (p.k401.mode === "max" ? limitFor("k401", p.curAge, 0, p) : Math.min(p.k401.custom, limitFor("k401", p.curAge, 0, p)));
+      const full = p.k401.salary * p.k401.matchCap;
+      $("matchHint").innerHTML = `This year your employer adds about <b>${fmt(employerMatch(empC0, 0, p))}</b>.` +
+        (empC0 < full ? ` You need to contribute ${fmt(full)} (${(p.k401.matchCap*100).toFixed(1)}% of salary) to get the full match.` : " You're getting the full match.");
+    }
+
+    // Totals
+    const finalTotal = deflate(r.total[n], n);
+    const startTotal = ACCTS.reduce((s, a) => s + r.start[a.key], 0);
+    const contribTotal = ACCTS.reduce((s, a) => s + r.contrib[a.key], 0);
+    const nominalGrowth = r.total[n] - startTotal - contribTotal;
+    $("totalLabel").textContent = `Your nest egg at ${p.retAge}`;
+    $("totalBig").textContent = fmt(finalTotal);
+    $("totalSub").textContent = view === "real"
+      ? `About ${fmt(r.total[n])} in future dollars, worth ${fmt(finalTotal)} in today's money at ${(p.infl * 100).toFixed(1)}% inflation.`
+      : `That's about ${fmt(r.total[n] / Math.pow(1 + p.infl, n))} in today's dollars at ${(p.infl * 100).toFixed(1)}% inflation.`;
+    $("statYears").textContent = n;
+    $("statStart").textContent = fmtShort(startTotal);
+    $("statContrib").textContent = fmtShort(contribTotal);
+    $("statGrowth").textContent = fmtShort(nominalGrowth);
+
+    // Account cards
+    ACCTS.forEach(a => {
+      const on = active.includes(a);
+      $("card-" + a.key).classList.toggle("hidden", !on);
+      const fin = r.bal[a.key][n];
+      const shown = deflate(fin, n);
+      const contribIn = r.start[a.key] + r.contrib[a.key];
+      const growth = fin - contribIn;
+      $("bal-" + a.key).textContent = fmt(shown);
+      $("con-" + a.key).textContent = fmtShort(contribIn);
+      $("gro-" + a.key).textContent = fmtShort(growth);
+      $("share-" + a.key).textContent = r.total[n] ? (fin / r.total[n] * 100).toFixed(0) + "%" : "0%";
+      const cp = fin > 0 ? Math.max(0, Math.min(100, contribIn / fin * 100)) : 0;
+      $("barc-" + a.key).style.width = cp + "%";
+      $("barg-" + a.key).style.width = (fin > 0 ? 100 - cp : 0) + "%";
+      const sc = charts["spark-" + a.key];
+      sc.data.labels = r.ages;
+      sc.data.datasets[0].data = r.bal[a.key].map((v, i) => deflate(v, i));
+      sc.update();
+    });
+
+    // Growth chart
+    charts.growth.data.labels = r.ages;
+    ACCTS.forEach((a, idx) => {
+      const ds = charts.growth.data.datasets[idx];
+      ds.data = r.bal[a.key].map((v, i) => deflate(v, i));
+      ds.hidden = !active.includes(a);
+    });
+    charts.growth.update();
+
+    // Mix chart
+    charts.mix.data.labels = active.map(a => a.name);
+    charts.mix.data.datasets[0].data = active.map(a => deflate(r.bal[a.key][n], n));
+    charts.mix.data.datasets[0].backgroundColor = active.map(a => a.color);
+    charts.mix.update();
+
+    // Split chart (shown in the selected view; contributions/growth split proportionally when deflated)
+    const f = view === "real" ? 1 / Math.pow(1 + p.infl, n) : 1;
+    charts.split.data.labels = active.map(a => a.name);
+    charts.split.data.datasets[0].data = active.map(a => r.start[a.key] * f);
+    charts.split.data.datasets[1].data = active.map(a => r.contrib[a.key] * f);
+    charts.split.data.datasets[2].data = active.map(a => Math.max(0, r.bal[a.key][n] - r.start[a.key] - r.contrib[a.key]) * f);
+    charts.split.update();
+
+    // Milestones
+    const marks = [100000, 250000, 500000, 1e6, 2e6, 3e6, 5e6, 10e6];
+    const ms = $("milestones");
+    ms.innerHTML = "";
+    let any = false;
+    marks.forEach(m => {
+      const i = r.total.findIndex((v, idx) => deflate(v, idx) >= m);
+      if (i > 0) {
+        any = true;
+        const d = document.createElement("div");
+        d.className = "milestone";
+        d.innerHTML = `<b>${fmtShort(m)}</b> by age ${r.ages[i]}`;
+        ms.appendChild(d);
+      }
+    });
+    if (!any) ms.innerHTML = `<div class="milestone">Keep going — try raising contributions or the years to grow.</div>`;
+
+    // Table
+    document.querySelectorAll(".brok-col").forEach(el => el.style.display = p.brok.on ? "" : "none");
+    const rows = r.ages.map((age, i) => {
+      const cells = ACCTS.filter(a => a.key !== "brok" || p.brok.on).map(a => `<td>${fmt(deflate(r.bal[a.key][i], i))}</td>`).join("");
+      return `<tr class="${i === n ? "ret-row" : ""}"><td>${age}</td><td>${r.years[i]}</td>${cells}<td class="total">${fmt(deflate(r.total[i], i))}</td></tr>`;
+    });
+    $("tableBody").innerHTML = rows.join("");
+  }
+
+  // ---------- UI wiring ----------
+  function syncVisibility() {
+    document.querySelectorAll("[data-show-when]").forEach(el => {
+      const [id, vals] = el.dataset.showWhen.split(":");
+      el.classList.toggle("hidden", !vals.split(",").includes($(id).value));
+    });
+    $("brokFields").classList.toggle("hidden", !$("brokOn").checked);
+    document.querySelectorAll(".seg").forEach(seg => {
+      const v = $(seg.dataset.target).value;
+      seg.querySelectorAll("button").forEach(b => b.classList.toggle("active", b.dataset.val === v));
+    });
+    $("rateRange").value = $("rate").value;
+  }
+
+  function update() { syncVisibility(); render(); }
+
+  document.querySelectorAll(".seg").forEach(seg => {
+    seg.addEventListener("click", e => {
+      const b = e.target.closest("button");
+      if (!b) return;
+      $(seg.dataset.target).value = b.dataset.val;
+      update();
+    });
+  });
+  $("rateRange").addEventListener("input", e => { $("rate").value = e.target.value; render(); });
+  INPUT_IDS.forEach(id => {
+    const el = $(id);
+    el.addEventListener("input", update);
+    el.addEventListener("change", update);
+  });
+  // Keep "contribute until" ages in step with retirement age when they were matching
+  let lastRet = num("retAge");
+  $("retAge").addEventListener("change", () => {
+    const nr = num("retAge");
+    ["k401Until", "rothUntil", "brokUntil"].forEach(id => { if (num(id) === lastRet) $(id).value = nr; });
+    if (num("hsaUntil") === Math.min(lastRet, 65)) $("hsaUntil").value = Math.min(nr, 65);
+    lastRet = nr;
+    update();
+  });
+
+  document.querySelectorAll(".view-toggle button").forEach(b => {
+    b.addEventListener("click", () => {
+      view = b.dataset.view;
+      document.querySelectorAll(".view-toggle button").forEach(x => x.classList.toggle("active", x === b));
+      render();
+    });
+  });
+
+  // Share link: encodes current inputs in the URL
+  function toast(msg) {
+    const t = $("toast"); t.textContent = msg; t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 2200);
+  }
+  $("shareBtn").addEventListener("click", async () => {
+    const params = new URLSearchParams();
+    INPUT_IDS.forEach(id => { const el = $(id); params.set(id, el.type === "checkbox" ? (el.checked ? "1" : "0") : el.value); });
+    const url = location.href.split("?")[0].split("#")[0] + "?" + params.toString();
+    try {
+      if (navigator.share && /Mobi/i.test(navigator.userAgent)) {
+        await navigator.share({ title: "NestGrow", text: "Check out my retirement plan on NestGrow", url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        toast("Link copied — share your plan!");
+      }
+    } catch { prompt("Copy this link:", url); }
+  });
+  $("resetBtn").addEventListener("click", () => {
+    INPUT_IDS.forEach(id => { const el = $(id); if (el.type === "checkbox") el.checked = DEFAULTS[id]; else el.value = DEFAULTS[id]; });
+    lastRet = num("retAge");
+    history.replaceState(null, "", location.pathname);
+    update();
+    toast("Reset to defaults");
+  });
+
+  // Load inputs from URL if present
+  const qp = new URLSearchParams(location.search);
+  INPUT_IDS.forEach(id => {
+    if (!qp.has(id)) return;
+    const el = $(id);
+    if (el.type === "checkbox") el.checked = qp.get(id) === "1"; else el.value = qp.get(id);
+  });
+  lastRet = num("retAge");
+
+  if (typeof Chart === "undefined") {
+    document.querySelector(".results").insertAdjacentHTML("afterbegin",
+      '<div class="panel" style="color:#B45309">Charts need an internet connection to load. The numbers below still work.</div>');
+    Chart = function () { return { data: { labels: [], datasets: [{}, {}, {}, {}] }, update() {} }; };
+    Chart.defaults = { font: {} };
+  }
+  Chart.defaults.font.family = '"Inter", system-ui, sans-serif';
+  Chart.defaults.color = "#5B6B63";
+  makeCharts();
+  update();
+})();
+</script>
+</body>
+</html>
