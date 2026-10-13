@@ -205,6 +205,12 @@
     transition: transform .3s ease; z-index: 50; box-shadow: 0 8px 24px rgba(0,0,0,.2);
   }
   .toast.show { transform: translateX(-50%) translateY(0); }
+  input[type="number"]::placeholder { color: #A7B5AE; font-weight: 500; font-size: 14px; }
+  .empty-state { text-align: center; padding: 36px 24px; color: var(--muted); }
+  .empty-state .icon { font-size: 36px; }
+  .empty-state h3 { margin: 6px 0 4px; color: var(--ink); font-size: 20px; }
+  .results.is-empty > *:not(#emptyState):not(.notes) { display: none; }
+  .results:not(.is-empty) #emptyState { display: none; }
   .warn { color: #B45309; font-size: 12px; font-weight: 600; display: none; }
   .warn.show { display: block; }
 </style>
@@ -242,11 +248,11 @@
       <div class="row">
         <div class="field">
           <label for="curAge">Current age</label>
-          <input type="number" id="curAge" value="25" min="16" max="90" />
+          <input type="number" id="curAge" value="" placeholder="e.g. 30" min="16" max="90" />
         </div>
         <div class="field">
           <label for="retAge">Retirement age</label>
-          <input type="number" id="retAge" value="65" min="17" max="100" />
+          <input type="number" id="retAge" value="" placeholder="e.g. 65" min="17" max="100" />
         </div>
       </div>
       <div class="field">
@@ -287,7 +293,7 @@
       <div class="section-title"><span><span class="dot" style="background:var(--c401k)"></span>401(k)</span><span class="limit-pill" id="k401Pill">Max: $24,500</span></div>
       <div class="field">
         <label for="k401Bal">Current balance</label>
-        <div class="input-wrap has-prefix"><span class="prefix">$</span><input type="number" id="k401Bal" value="57000" min="0" step="500" /></div>
+        <div class="input-wrap has-prefix"><span class="prefix">$</span><input type="number" id="k401Bal" value="" placeholder="Enter 401(k) balance" min="0" step="500" /></div>
       </div>
       <div class="field">
         <span class="label">Yearly contribution</span>
@@ -301,11 +307,11 @@
       <div class="row">
         <div class="field collapsible" data-show-when="k401Mode:custom">
           <label for="k401Custom">Your amount / yr</label>
-          <div class="input-wrap has-prefix"><span class="prefix">$</span><input type="number" id="k401Custom" value="10000" min="0" step="500" /></div>
+          <div class="input-wrap has-prefix"><span class="prefix">$</span><input type="number" id="k401Custom" value="" placeholder="Enter amount" min="0" step="500" /></div>
         </div>
         <div class="field collapsible" data-show-when="k401Mode:max,custom">
           <label for="k401Until">Contribute until age</label>
-          <input type="number" id="k401Until" value="65" min="16" max="100" />
+          <input type="number" id="k401Until" value="" placeholder="Retirement age" min="16" max="100" />
         </div>
       </div>
       <div class="field">
@@ -321,28 +327,28 @@
         <div class="row">
           <div class="field">
             <label for="salary">Annual salary</label>
-            <div class="input-wrap has-prefix"><span class="prefix">$</span><input type="number" id="salary" value="75000" min="0" step="1000" /></div>
+            <div class="input-wrap has-prefix"><span class="prefix">$</span><input type="number" id="salary" value="" placeholder="Enter salary" min="0" step="1000" /></div>
           </div>
           <div class="field">
             <label for="salaryGrowth">Raise / yr</label>
-            <div class="input-wrap has-suffix"><input type="number" id="salaryGrowth" value="3" min="0" max="20" step="0.5" /><span class="suffix">%</span></div>
+            <div class="input-wrap has-suffix"><input type="number" id="salaryGrowth" value="" placeholder="e.g. 3" min="0" max="20" step="0.5" /><span class="suffix">%</span></div>
           </div>
         </div>
         <div class="row">
           <div class="field">
             <label for="matchPct">Employer matches</label>
-            <div class="input-wrap has-suffix"><input type="number" id="matchPct" value="100" min="0" max="200" step="5" /><span class="suffix">%</span></div>
+            <div class="input-wrap has-suffix"><input type="number" id="matchPct" value="" placeholder="e.g. 100" min="0" max="200" step="5" /><span class="suffix">%</span></div>
           </div>
           <div class="field">
             <label for="matchCap">Up to (of salary)</label>
-            <div class="input-wrap has-suffix"><input type="number" id="matchCap" value="6" min="0" max="100" step="0.5" /><span class="suffix">%</span></div>
+            <div class="input-wrap has-suffix"><input type="number" id="matchCap" value="" placeholder="e.g. 6" min="0" max="100" step="0.5" /><span class="suffix">%</span></div>
           </div>
         </div>
         <div class="hint" id="matchHint">Example: 100% match up to 6% of salary.</div>
       </div>
       <div class="field collapsible" data-show-when="matchType:dollar">
         <label for="k401Match">Employer match / yr</label>
-        <div class="input-wrap has-prefix"><span class="prefix">$</span><input type="number" id="k401Match" value="0" min="0" step="250" /></div>
+        <div class="input-wrap has-prefix"><span class="prefix">$</span><input type="number" id="k401Match" value="" placeholder="Enter match amount" min="0" step="250" /></div>
       </div>
       <div class="hint">The match is added only in years you contribute. The combined total is capped at the $72,000 IRS annual limit.</div>
       <div class="warn" id="k401Warn">Custom amount is above the IRS limit — it's capped at the limit.</div>
@@ -353,7 +359,7 @@
       <div class="section-title"><span><span class="dot" style="background:var(--croth)"></span>Roth IRA</span><span class="limit-pill" id="rothPill">Max: $7,500</span></div>
       <div class="field">
         <label for="rothBal">Current balance</label>
-        <div class="input-wrap has-prefix"><span class="prefix">$</span><input type="number" id="rothBal" value="25000" min="0" step="500" /></div>
+        <div class="input-wrap has-prefix"><span class="prefix">$</span><input type="number" id="rothBal" value="" placeholder="Enter Roth IRA balance" min="0" step="500" /></div>
       </div>
       <div class="field">
         <span class="label">Yearly contribution</span>
@@ -367,11 +373,11 @@
       <div class="row">
         <div class="field collapsible" data-show-when="rothMode:custom">
           <label for="rothCustom">Your amount / yr</label>
-          <div class="input-wrap has-prefix"><span class="prefix">$</span><input type="number" id="rothCustom" value="3000" min="0" step="250" /></div>
+          <div class="input-wrap has-prefix"><span class="prefix">$</span><input type="number" id="rothCustom" value="" placeholder="Enter amount" min="0" step="250" /></div>
         </div>
         <div class="field collapsible" data-show-when="rothMode:max,custom">
           <label for="rothUntil">Contribute until age</label>
-          <input type="number" id="rothUntil" value="65" min="16" max="100" />
+          <input type="number" id="rothUntil" value="" placeholder="Retirement age" min="16" max="100" />
         </div>
       </div>
       <div class="warn" id="rothWarn">Custom amount is above the IRS limit — it's capped at the limit.</div>
@@ -383,7 +389,7 @@
       <div class="row">
         <div class="field">
           <label for="hsaBal">Current balance</label>
-          <div class="input-wrap has-prefix"><span class="prefix">$</span><input type="number" id="hsaBal" value="7000" min="0" step="250" /></div>
+          <div class="input-wrap has-prefix"><span class="prefix">$</span><input type="number" id="hsaBal" value="" placeholder="Enter HSA balance" min="0" step="250" /></div>
         </div>
         <div class="field">
           <label for="hsaCoverage">Coverage</label>
@@ -405,14 +411,14 @@
       <div class="row">
         <div class="field collapsible" data-show-when="hsaMode:custom">
           <label for="hsaCustom">Your amount / yr</label>
-          <div class="input-wrap has-prefix"><span class="prefix">$</span><input type="number" id="hsaCustom" value="2000" min="0" step="250" /></div>
+          <div class="input-wrap has-prefix"><span class="prefix">$</span><input type="number" id="hsaCustom" value="" placeholder="Enter amount" min="0" step="250" /></div>
         </div>
         <div class="field collapsible" data-show-when="hsaMode:max,custom">
           <label for="hsaUntil">Contribute until age</label>
-          <input type="number" id="hsaUntil" value="65" min="16" max="65" />
+          <input type="number" id="hsaUntil" value="" placeholder="Retirement age" min="16" max="65" />
         </div>
       </div>
-      <div class="hint">HSA contributions stop at 65 (Medicare enrollment generally ends eligibility).</div>
+      <div class="hint">Leave "Contribute until age" blank to contribute until you retire. HSA contributions stop at 65 (Medicare enrollment generally ends eligibility).</div>
       <div class="warn" id="hsaWarn">Custom amount is above the IRS limit — it's capped at the limit.</div>
     </div>
 
@@ -427,21 +433,21 @@
         <div class="row">
           <div class="field">
             <label for="brokBal">Current balance</label>
-            <div class="input-wrap has-prefix"><span class="prefix">$</span><input type="number" id="brokBal" value="5000" min="0" step="500" /></div>
+            <div class="input-wrap has-prefix"><span class="prefix">$</span><input type="number" id="brokBal" value="" placeholder="Enter balance" min="0" step="500" /></div>
           </div>
           <div class="field">
             <label for="brokMonthly">Monthly contribution</label>
-            <div class="input-wrap has-prefix"><span class="prefix">$</span><input type="number" id="brokMonthly" value="500" min="0" step="50" /></div>
+            <div class="input-wrap has-prefix"><span class="prefix">$</span><input type="number" id="brokMonthly" value="" placeholder="Enter monthly amount" min="0" step="50" /></div>
           </div>
         </div>
         <div class="row">
           <div class="field">
             <label for="brokUntil">Contribute until age</label>
-            <input type="number" id="brokUntil" value="65" min="16" max="100" />
+            <input type="number" id="brokUntil" value="" placeholder="Retirement age" min="16" max="100" />
           </div>
           <div class="field">
             <label for="brokIncrease">Raise contribution / yr</label>
-            <div class="input-wrap has-suffix"><input type="number" id="brokIncrease" value="0" min="0" max="20" step="0.5" /><span class="suffix">%</span></div>
+            <div class="input-wrap has-suffix"><input type="number" id="brokIncrease" value="" placeholder="e.g. 2" min="0" max="20" step="0.5" /><span class="suffix">%</span></div>
           </div>
         </div>
       </div>
@@ -449,7 +455,12 @@
   </aside>
 
   <!-- ================= RESULTS ================= -->
-  <section class="results" aria-live="polite">
+  <section class="results is-empty" aria-live="polite">
+    <div class="panel empty-state" id="emptyState">
+      <div class="icon">🌱</div>
+      <h3>Let's grow your nest egg</h3>
+      <div>Enter your current age and retirement age, then add your account balances to see your projection.</div>
+    </div>
     <div class="total-card">
       <div>
         <div class="eyebrow" id="totalLabel">Your nest egg at 65</div>
@@ -540,7 +551,7 @@
       <strong>How NestGrow calculates</strong>
       <ul>
         <li>Contributions go in monthly, and returns compound monthly at the annual rate you choose.</li>
-        <li>"Max out" uses the 2026 IRS limits: 401(k) $24,500 (+$8,000 at 50+, or +$11,250 at ages 60–63), IRA $7,500 (+$1,100 at 50+), HSA $4,400 self-only / $8,750 family (+$1,000 at 55+).</li>
+        <li>"Max out" uses the 2026 IRS limits: 401(k) $24,500 (+$8,000 at 50+, or +$11,250 at ages 60–63), IRA $7,500 (+$1,100 at 50+), HSA $4,400 self-only / $8,750 family (+$1,000 at 55+).</[...]
         <li>Percentage match = the lesser of (your 401(k) contribution, salary × "up to" %) × match %. Your salary grows by the raise % each year.</li>
         <li>"Contribute until age" means you contribute every year until you reach that age.</li>
         <li>"Today's dollars" adjusts future values for the inflation rate you enter.</li>
@@ -592,6 +603,10 @@
   };
 
   // ---------- Inputs ----------
+  const isBlank = (id) => $(id).value.trim() === "";
+  const untilAge = (id, retAge) => isBlank(id) ? retAge : num(id);
+  const hasCore = () => !isBlank("curAge") && !isBlank("retAge") && num("curAge") > 0 && num("retAge") > 0;
+
   function readInputs() {
     const curAge = Math.round(num("curAge"));
     let retAge = Math.round(num("retAge"));
@@ -602,12 +617,12 @@
       infl: num("inflation") / 100,
       limitGrowth: $("limitGrowth").value === "yes",
       catchUp: $("catchUp").checked,
-      k401: { bal: num("k401Bal"), mode: $("k401Mode").value, custom: num("k401Custom"), until: num("k401Until"), match: num("k401Match"),
+      k401: { bal: num("k401Bal"), mode: $("k401Mode").value, custom: num("k401Custom"), until: untilAge("k401Until", retAge), match: num("k401Match"),
         matchType: $("matchType").value, salary: num("salary"), salaryGrowth: num("salaryGrowth") / 100,
         matchPct: num("matchPct") / 100, matchCap: num("matchCap") / 100 },
-      roth: { bal: num("rothBal"), mode: $("rothMode").value, custom: num("rothCustom"), until: num("rothUntil") },
-      hsa:  { bal: num("hsaBal"), mode: $("hsaMode").value, custom: num("hsaCustom"), until: Math.min(num("hsaUntil"), 65), family: $("hsaCoverage").value === "family" },
-      brok: { on: $("brokOn").checked, bal: num("brokBal"), monthly: num("brokMonthly"), until: num("brokUntil"), inc: num("brokIncrease") / 100 }
+      roth: { bal: num("rothBal"), mode: $("rothMode").value, custom: num("rothCustom"), until: untilAge("rothUntil", retAge) },
+      hsa:  { bal: num("hsaBal"), mode: $("hsaMode").value, custom: num("hsaCustom"), until: Math.min(untilAge("hsaUntil", retAge), 65), family: $("hsaCoverage").value === "family" },
+      brok: { on: $("brokOn").checked, bal: num("brokBal"), monthly: num("brokMonthly"), until: untilAge("brokUntil", retAge), inc: num("brokIncrease") / 100 }
     };
   }
 
@@ -769,6 +784,9 @@
 
   // ---------- Render ----------
   function render() {
+    const results = document.querySelector(".results");
+    results.classList.toggle("is-empty", !hasCore());
+    if (!hasCore()) return;
     const p = readInputs();
     const r = simulate(p);
     const n = r.ages.length - 1;
@@ -783,7 +801,9 @@
     $("rothWarn").classList.toggle("show", p.roth.mode === "custom" && p.roth.custom > limitFor("roth", p.curAge, 0, p));
     $("hsaWarn").classList.toggle("show",  p.hsa.mode === "custom"  && p.hsa.custom  > limitFor("hsa", p.curAge, 0, p));
 
-    if (p.k401.matchType === "pct") {
+    if (p.k401.matchType === "pct" && isBlank("salary")) {
+      $("matchHint").textContent = "Example: 100% match up to 6% of salary.";
+    } else if (p.k401.matchType === "pct") {
       const empC0 = p.k401.mode === "none" ? 0 : (p.k401.mode === "max" ? limitFor("k401", p.curAge, 0, p) : Math.min(p.k401.custom, limitFor("k401", p.curAge, 0, p)));
       const full = p.k401.salary * p.k401.matchCap;
       $("matchHint").innerHTML = `This year your employer adds about <b>${fmt(employerMatch(empC0, 0, p))}</b>.` +
@@ -909,8 +929,8 @@
   let lastRet = num("retAge");
   $("retAge").addEventListener("change", () => {
     const nr = num("retAge");
-    ["k401Until", "rothUntil", "brokUntil"].forEach(id => { if (num(id) === lastRet) $(id).value = nr; });
-    if (num("hsaUntil") === Math.min(lastRet, 65)) $("hsaUntil").value = Math.min(nr, 65);
+    ["k401Until", "rothUntil", "brokUntil"].forEach(id => { if (!isBlank(id) && num(id) === lastRet) $(id).value = nr; });
+    if (!isBlank("hsaUntil") && num("hsaUntil") === Math.min(lastRet, 65)) $("hsaUntil").value = Math.min(nr, 65);
     lastRet = nr;
     update();
   });
@@ -946,7 +966,7 @@
     lastRet = num("retAge");
     history.replaceState(null, "", location.pathname);
     update();
-    toast("Reset to defaults");
+    toast("Cleared — enter your info to start");
   });
 
   // Load inputs from URL if present
